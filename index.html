@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+	<head>
+		<meta charset="utf-8">
+		<title>Sudoku</title>
+		<style type="text/css">
+			body {
+				background-color: #222;
+			}
+
+			div {
+				box-sizing: border-box;
+			}
+
+			#board {
+				width: 98vmin;
+				height: 98vmin;
+				position: absolute;
+				margin: auto;
+				top: 0;
+				right: 0;
+				bottom: 0;
+				left: 0;
+
+				font-family: Arial, Helvetica, sans-serif;
+				font-size: 8vmin;
+				font-weight: bold;
+				text-align: center;
+				color: #0C0;
+
+				display: flex;
+				flex-flow: row wrap;
+				justify-content: space-around;
+			}
+
+			.quadrant {
+				width: 33.333%;
+				height: 33.333%;
+
+				display: flex;
+				flex-flow: row wrap;
+				justify-content: space-around;
+
+				border-width: 0.4vmin;
+				border-style: solid;
+				border-color: #666;
+
+				background-color: #666;
+			}
+
+			.cell {
+				width: 33.333%;
+				height: 33.333%;
+
+				background-color: #333;
+
+				border-width: 0.2vmin;
+				border-style: solid;
+				border-color: #666;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="board">
+			<div class="quadrant 1">
+				<div contenteditable="true" class="cell" id="11"></div>
+				<div contenteditable="true" class="cell" id="12"></div>
+				<div contenteditable="true" class="cell" id="13"></div>
+				<div contenteditable="true" class="cell" id="21"></div>
+				<div contenteditable="true" class="cell" id="22"></div>
+				<div contenteditable="true" class="cell" id="23"></div>
+				<div contenteditable="true" class="cell" id="31"></div>
+				<div contenteditable="true" class="cell" id="32"></div>
+				<div contenteditable="true" class="cell" id="33"></div>
+			</div>
+			<div class="quadrant 2">
+				<div contenteditable="true" class="cell" id="14"></div>
+				<div contenteditable="true" class="cell" id="15"></div>
+				<div contenteditable="true" class="cell" id="16"></div>
+				<div contenteditable="true" class="cell" id="24"></div>
+				<div contenteditable="true" class="cell" id="25"></div>
+				<div contenteditable="true" class="cell" id="26"></div>
+				<div contenteditable="true" class="cell" id="34"></div>
+				<div contenteditable="true" class="cell" id="35"></div>
+				<div contenteditable="true" class="cell" id="36"></div>
+			</div>
+			<div class="quadrant 3">
+				<div contenteditable="true" class="cell" id="17"></div>
+				<div contenteditable="true" class="cell" id="18"></div>
+				<div contenteditable="true" class="cell" id="19"></div>
+				<div contenteditable="true" class="cell" id="27"></div>
+				<div contenteditable="true" class="cell" id="28"></div>
+				<div contenteditable="true" class="cell" id="29"></div>
+				<div contenteditable="true" class="cell" id="37"></div>
+				<div contenteditable="true" class="cell" id="38"></div>
+				<div contenteditable="true" class="cell" id="39"></div>
+			</div>
+
+			<div class="quadrant 4">
+				<div contenteditable="true" class="cell" id="41"></div>
+				<div contenteditable="true" class="cell" id="42"></div>
+				<div contenteditable="true" class="cell" id="43"></div>
+				<div contenteditable="true" class="cell" id="51"></div>
+				<div contenteditable="true" class="cell" id="52"></div>
+				<div contenteditable="true" class="cell" id="53"></div>
+				<div contenteditable="true" class="cell" id="61"></div>
+				<div contenteditable="true" class="cell" id="62"></div>
+				<div contenteditable="true" class="cell" id="63"></div>
+			</div>
+			<div class="quadrant 5">
+				<div contenteditable="true" class="cell" id="44"></div>
+				<div contenteditable="true" class="cell" id="45"></div>
+				<div contenteditable="true" class="cell" id="46"></div>
+				<div contenteditable="true" class="cell" id="54"></div>
+				<div contenteditable="true" class="cell" id="55"></div>
+				<div contenteditable="true" class="cell" id="56"></div>
+				<div contenteditable="true" class="cell" id="64"></div>
+				<div contenteditable="true" class="cell" id="65"></div>
+				<div contenteditable="true" class="cell" id="66"></div>
+			</div>
+			<div class="quadrant 6">
+				<div contenteditable="true" class="cell" id="47"></div>
+				<div contenteditable="true" class="cell" id="48"></div>
+				<div contenteditable="true" class="cell" id="49"></div>
+				<div contenteditable="true" class="cell" id="57"></div>
+				<div contenteditable="true" class="cell" id="58"></div>
+				<div contenteditable="true" class="cell" id="59"></div>
+				<div contenteditable="true" class="cell" id="67"></div>
+				<div contenteditable="true" class="cell" id="68"></div>
+				<div contenteditable="true" class="cell" id="69"></div>
+			</div>
+
+			<div class="quadrant 7">
+				<div contenteditable="true" class="cell" id="71"></div>
+				<div contenteditable="true" class="cell" id="72"></div>
+				<div contenteditable="true" class="cell" id="73"></div>
+				<div contenteditable="true" class="cell" id="81"></div>
+				<div contenteditable="true" class="cell" id="82"></div>
+				<div contenteditable="true" class="cell" id="83"></div>
+				<div contenteditable="true" class="cell" id="91"></div>
+				<div contenteditable="true" class="cell" id="92"></div>
+				<div contenteditable="true" class="cell" id="93"></div>
+			</div>
+			<div class="quadrant 8">
+				<div contenteditable="true" class="cell" id="74"></div>
+				<div contenteditable="true" class="cell" id="75"></div>
+				<div contenteditable="true" class="cell" id="76"></div>
+				<div contenteditable="true" class="cell" id="84"></div>
+				<div contenteditable="true" class="cell" id="85"></div>
+				<div contenteditable="true" class="cell" id="86"></div>
+				<div contenteditable="true" class="cell" id="94"></div>
+				<div contenteditable="true" class="cell" id="95"></div>
+				<div contenteditable="true" class="cell" id="96"></div>
+			</div>
+			<div class="quadrant 9">
+				<div contenteditable="true" class="cell" id="77"></div>
+				<div contenteditable="true" class="cell" id="78"></div>
+				<div contenteditable="true" class="cell" id="79"></div>
+				<div contenteditable="true" class="cell" id="87"></div>
+				<div contenteditable="true" class="cell" id="88"></div>
+				<div contenteditable="true" class="cell" id="89"></div>
+				<div contenteditable="true" class="cell" id="97"></div>
+				<div contenteditable="true" class="cell" id="98"></div>
+				<div contenteditable="true" class="cell" id="99"></div>
+			</div>
+		</div>
+
+		<script>
+		
+			/***************************************************************************
+			 * Executable Logic, everything else is a function definition
+			 ***************************************************************************
+			 */
+			;
+			(function () {
+				console.log("Sudoku")
+				let generated = 1
+				generateRandomBoard()
+				while (!validateBoard()) {
+					resetBoard()
+					generateRandomBoard()
+					generated += 1
+				}
+				console.log(generated, 'boards generated before finding a valid one')
+
+				let cellsFilled = 0
+				for (let cell of document.getElementsByClassName('cell')) {
+					if (cell.innerText) {
+						cellsFilled += 1
+					}
+				}
+
+				console.log(cellsFilled, 'cells filled')
+			})()
+
+
+			/***************************************************************************
+			 * All of the below code deals with generating and validating sudoku boards
+			 ***************************************************************************
+			 */
+
+			function generateRandomBoard() {
+				for (let i = 1; i <= 9; i++) {
+					for (let j = 1; j <= 9; j++) {
+						const cell = document.getElementById(`${i}${j}`);
+						if (Math.random() > 0.7) cell.innerText = Math.ceil(Math.random() * 9);
+						cell.addEventListener("input", cellInputCb)
+					}
+				}
+			}
+
+			function cellInputCb() {
+				let capture;
+				if (!this.innerText.match(/^[0-9]$/)) {
+					if (capture = this.innerText.match(/([0-9])/)) {
+						this.innerText = capture[1]
+					}
+					else {
+						this.innerText = ''
+					}
+				}
+				validateBoard()
+			}
+
+			/**
+			 * Function to scan every cell and validate against sudoku's game rules
+			 * @return true if the board is fine or false if not
+			 */
+			function validateBoard() {
+				resetValidation()
+
+				const validRowsAndColumns = validateRowsAndColumns()
+
+				const validQuadrants = validateQuadrants()
+
+				return validRowsAndColumns && validQuadrants
+			}
+
+			function validateQuadrants() {
+				let valid = true
+				for (let i = 1; i <= 9; i++) {
+					const quadrant = document.getElementsByClassName(`quadrant ${i}`)[0]
+					let seen = {}
+					for (let pass = 1; pass <= 2; pass++) {
+						for (let cell of quadrant.children) {
+							const number = cell.innerText
+							if (number) {
+								if (pass == 1 && seen[number] || pass == 2 && seen[number] > 1) {
+									markCellValid(cell, false)
+									valid = false
+								}
+								seen[number] ? seen[number]++ : seen[number] = 1
+							}
+						}
+					}
+				}
+				return valid
+			}
+
+			function validateRowsAndColumns() {
+				let valid = true
+
+				for (let ltr of [true, false]) { // Cycle left to right or row by row, then top to bottom or through each column
+					for (let i = 1; i <= 9; i++) {
+						let seen = {}
+						for (let pass = 1; pass <= 2; pass++) {
+							for (let j = 1; j <= 9; j++) {
+								const cellId = ltr ? `${i}${j}` : `${j}${i}`
+								const cell = document.getElementById(cellId);
+								const number = cell.innerText
+
+								if (number) {
+									if (pass == 1 && seen[number] || pass == 2 && seen[number] > 1) {
+										markCellValid(cell, false)
+										valid = false
+									}
+									seen[number] ? seen[number]++ : seen[number] = 1
+								}
+							}
+						}
+					}
+				}
+				return valid
+			}
+
+			function resetValidation() {
+				for (let i = 1; i <= 9; i++) {
+					for (let j = 1; j <= 9; j++) {
+						markCellValid(document.getElementById(`${i}${j}`), true)
+					}
+				}
+			}
+
+			function resetBoard() {
+				for (let i = 1; i <= 9; i++) {
+					for (let j = 1; j <= 9; j++) {
+						document.getElementById(`${i}${j}`).innerText = ''
+					}
+				}
+			}
+
+			function markCellValid(cell, valid) {
+				if (valid) {
+					cell.style.color = ''
+				}
+				else {
+					cell.style.color = '#A00'
+				}
+			}
+			
+
+			/***************************************************************************
+			 * All of the below code deals with solving sudoku boards
+			 ***************************************************************************
+			 */
+			function solveBoard() {
+				for (let i = 1; i <= 9; i++) {
+
+				}
+			}
+		</script>
+	</body>
+
+</html>
