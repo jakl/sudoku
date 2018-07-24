@@ -168,14 +168,26 @@
 		</div>
 
 		<script>
-		
 			/***************************************************************************
 			 * Executable Logic, everything else is a function definition
 			 ***************************************************************************
 			 */
+
+			let outputCellCounter = 0;
 			;
 			(function () {
 				console.log("Sudoku")
+				attachInputListeners()
+				solveBoard()
+			})()
+
+
+			/***************************************************************************
+			 * All of the below code deals with generating and validating sudoku boards
+			 ***************************************************************************
+			 */
+
+			function generateRandomValidBoard() {
 				let generated = 1
 				generateRandomBoard()
 				while (!validateBoard()) {
@@ -191,22 +203,23 @@
 						cellsFilled += 1
 					}
 				}
-
 				console.log(cellsFilled, 'cells filled')
-			})()
+			}
 
-
-			/***************************************************************************
-			 * All of the below code deals with generating and validating sudoku boards
-			 ***************************************************************************
-			 */
+			function attachInputListeners() {
+				for (let i = 1; i <= 9; i++) {
+					for (let j = 1; j <= 9; j++) {
+						const cell = document.getElementById(`${i}${j}`);
+						cell.addEventListener("input", cellInputCb)
+					}
+				}
+			}
 
 			function generateRandomBoard() {
 				for (let i = 1; i <= 9; i++) {
 					for (let j = 1; j <= 9; j++) {
 						const cell = document.getElementById(`${i}${j}`);
 						if (Math.random() > 0.7) cell.innerText = Math.ceil(Math.random() * 9);
-						cell.addEventListener("input", cellInputCb)
 					}
 				}
 			}
@@ -309,16 +322,205 @@
 					cell.style.color = '#A00'
 				}
 			}
-			
+
 
 			/***************************************************************************
 			 * All of the below code deals with solving sudoku boards
 			 ***************************************************************************
 			 */
 			function solveBoard() {
-				for (let i = 1; i <= 9; i++) {
+				// Each cell in this board is a hash of numbers tracking whether they're invalid (true) or valid (false)
+				// as well as tracking the number written in the cell if any
+				// Example of a cell containing the number 2 which is valid, while 1 would be invalid for this cell:
+				// Ex: { 1: true, 2: false, number: 2 }
+				const board = [
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+				]
+				board.counts = [null, 0, 0, 0, 0, 0, 0, 0, 0, 0] // The times each number appears on the board. The 0 index is ignored.
+				//for (let number = 1; number <= 9; number++) fillNextNumber(board, number) // Fill one of each number to start
+				const solvedBoard = recursivelySolveBoard(board)
+				//outputBoardToUI(solvedBoard)
+			}
 
+			function recursivelySolveBoard(board) {
+				const number = pickNumber(board.counts)
+				if (!number) {
+					return board // solved
 				}
+
+				// Find all valid cell coordinates
+				let goodCells = []
+				for (let i = 0; i < 9; i++) {
+					for (let j = 0; j < 9; j++) {
+						const cell = board[i][j]
+						if (!cell[number] && !cell.number) {
+							goodCells.push([i, j])
+						}
+					}
+				}
+
+				if (!goodCells.length) return false // no viable cells means dead end
+
+				const newBoard = deepCopyBoard(board)
+
+				for (const goodCell of goodCells) {
+					writeNumber(newBoard, number, goodCell[0], goodCell[1])
+					const answer = recursivelySolveBoard(newBoard)
+					if (answer) {
+						return answer // solved
+					} // else dead end
+				}
+
+				return false // all viable cells led to a dead end
+			}
+
+			function outputBoardToUI(board) {
+				for (let i = 1; i <= 9; i++) {
+					for (let j = 1; j <= 9; j++) {
+						const cell = document.getElementById(`${i}${j}`);
+						if (board[i - 1][j - 1].number) {
+							cell.innerText = board[i - 1][j - 1].number
+						}
+						else {
+							cell.innerText = ''
+						}
+					}
+				}
+			}
+
+			function deepCopyBoard(oldBoard) {
+				const newBoard = [
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
+				]
+				newBoard.counts = [null, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+				for (let i = 0; i < 9; i++) {
+					for (let j = 0; j < 9; j++) {
+						for (let number = 1; number <= 9; number++) {
+							if (oldBoard[i][j][number]) newBoard[i][j][number] = oldBoard[i][j][number]
+						}
+						if (oldBoard[i][j].number) newBoard[i][j].number = oldBoard[i][j].number
+					}
+				}
+
+				for (let number = 1; number <= 9; number++) {
+					newBoard.counts[number] = oldBoard.counts[number]
+				}
+
+				return newBoard
+			}
+
+			/**
+			 * Pick a good number and try to fill it for a given board
+			 */
+			function fillNextNumber(board, optionalNumber) {
+				let number = optionalNumber || pickNumber(board.counts)
+				if (!number) {
+					console.log("Stopping cause no numbers left")
+					return false
+				}
+				let [x, y] = findValidCoordinatesForNumber(board, number)
+				if (x == -1 || y == -1) {
+					console.log("Stopping cause can't find valid coordinates")
+					return false
+				}
+				writeNumber(board, number, x, y)
+				return true
+			}
+
+			/**
+			 * Find a good number to try to fill next given the counts of each number
+			 * Will return 0 if no number is possible
+			 */
+			function pickNumber(counts) {
+				let pick = { number: 0, count: -1 }
+				for (let number = 1; number <= 9; number++) {
+					if (counts[number] < 9) {
+						if (counts[number] > pick.count) {
+							pick.number = number
+							pick.count = counts[number]
+						}
+						else if (counts[number] == pick.count && Math.random() > 0.7) {
+							pick.number = number
+						}
+					}
+				}
+
+				return pick.number
+			}
+
+			/**
+			 * Simply write a number to a board, no validation prior to writing
+			 * Will update board counts and number-valid hash
+			 */
+			function writeNumber(board, number, x, y) {
+				let xset = getQuadrant(x)
+				let yset = getQuadrant(y)
+
+				board[x][y].number = number
+				for (let i = 0; i < 9; i++) {
+					board[x][i][number] = true
+					board[i][y][number] = true
+				}
+				for (let i of xset) {
+					for (let j of yset) {
+						board[i][j][number] = true
+					}
+				}
+				board.counts[number] += 1
+
+				outputCell(x+1, y+1, number)
+			}
+
+			// Output just one cell to the UI
+			function outputCell(i, j, number) {
+				setTimeout((() => document.getElementById(`${i}${j}`).innerText = number), outputCellCounter += 300)
+			}
+
+			// returns [-1, -1] when no coordinates are found
+			function findValidCoordinatesForNumber(board, number) {
+				let x = Math.floor(Math.random() * 9)
+				let y = Math.floor(Math.random() * 9)
+				let iterations = 0
+				while (board[x][y][number] || board[x][y].number) {
+					x = Math.floor(Math.random() * 9)
+					y = Math.floor(Math.random() * 9)
+					if (iterations++ > 1000000) return [-1, -1]
+				}
+				return [x, y]
+			}
+
+			/**
+			 * Given a coordinate return a set of cordinates for every cell in it's quadrant
+			 * @return Given c=1 then return [0,1,2]
+			 */
+			function getQuadrant(coordinate) {
+				let quadrant = [6, 7, 8]
+
+				if (coordinate < 3) {
+					quadrant = [0, 1, 2]
+				}
+				else if (coordinate < 6) {
+					quadrant = [3, 4, 5]
+				}
+
+				return quadrant
 			}
 		</script>
 	</body>
