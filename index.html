@@ -78,7 +78,7 @@
 			 ***************************************************************************
 			 */
 
-			let outputCellCounter = 0;;
+			let totalRecursions = 0;
 			(function () {
 				console.log("Sudoku")
 				generateHtml()
@@ -117,14 +117,14 @@
 			function attachInputListeners() {
 				for (let i = 0; i < 9; i++) {
 					for (let j = 0; j < 9; j++) {
-						const cell = document.getElementById(`${i}${j}`);
+						const cell = document.getElementById(`${i}${j}`)
 						cell.addEventListener("input", cellInputCb)
 					}
 				}
 			}
 
 			function cellInputCb() {
-				let capture;
+				let capture
 				if (!this.innerText.match(/^[0-9]$/)) {
 					if (capture = this.innerText.match(/([0-9])/)) {
 						this.innerText = capture[1]
@@ -248,17 +248,15 @@
 				board.counts = [null, 0, 0, 0, 0, 0, 0, 0, 0, 0] // The times each number appears on the board. The 0 index is ignored.
 				const solution = await recursivelySolveBoard(board)
 				outputBoardToUI(solution)
-				console.log("#Done")
+				console.log("Total Recursions: ", totalRecursions)
 			}
 
 			async function recursivelySolveBoard(board) {
+				totalRecursions += 1
 				if (!solutionPossible(board)) return false
 
 				const number = pickNumber(board.counts)
-				if (!number) {
-					console.log("#Solved Out of numbers")
-					return board // solved
-				}
+				if (!number) return board // solved
 
 				// Find all valid cell coordinates
 				let goodCells = []
@@ -271,9 +269,7 @@
 					}
 				}
 
-				if (!goodCells.length) {
-					return false // no viable cells means dead end
-				}
+				if (!goodCells.length) return false // no viable cells means dead end
 
 				shuffleArray(goodCells)
 
@@ -281,10 +277,7 @@
 					const newBoard = deepCopyBoard(board)
 					await writeNumber(newBoard, number, goodCell[0], goodCell[1])
 					const answer = await recursivelySolveBoard(newBoard)
-					if (answer) {
-						console.log("#Solved Recursion true")
-						return answer // solved
-					} // else dead end
+					if (answer) return answer // solved
 				}
 
 				return false // all viable cells led to a dead end
@@ -331,7 +324,7 @@
 			function outputBoardToUI(board) {
 				for (let i = 0; i < 9; i++) {
 					for (let j = 0; j < 9; j++) {
-						const cell = document.getElementById(`${i}${j}`);
+						const cell = document.getElementById(`${i}${j}`)
 						if (board[i][j].number) {
 							cell.innerText = board[i][j].number
 						}
@@ -462,12 +455,12 @@
 			}
 
 			function shuffleArray(a) {
-		    for (let i = a.length - 1; i > 0; i--) {
-		        const j = Math.floor(Math.random() * (i + 1));
-		        [a[i], a[j]] = [a[j], a[i]];
-		    }
-		    return a;
-		}
+				for (let i = a.length - 1; i > 0; i--) {
+					const j = Math.floor(Math.random() * (i + 1));
+					[a[i], a[j]] = [a[j], a[i]]
+				}
+				return a
+			}
 		</script>
 	</body>
 
