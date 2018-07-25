@@ -5,18 +5,69 @@
 		<meta charset="utf-8">
 		<title>Sudoku</title>
 		<style type="text/css">
-			body {
-				background-color: #222;
+			* {
+				padding: 0;
+				margin: 0;
+				border-width: 0;
+				overflow: hidden;
 			}
 
 			div {
 				box-sizing: border-box;
 			}
 
+			input[type="color"] {
+				width: 4vmin;
+				height: 4vmin;
+			}
+
+			#game {
+				text-align: center;
+			}
+
+			#icons {
+				height: 5vmin;
+				display: inline-block;
+
+				border-width: 0.2vmin;
+				border-style: solid;
+				border-radius: 1vmin;
+
+				min-width: 90vmin;
+
+				text-align: left;
+			}
+
+			#icons button,
+			#recursions,
+			#removals {
+				vertical-align: middle;
+				height: 75%;
+				padding: 1vmin;
+				margin-bottom: 1.8vmin;
+				margin-top: -1vmin;
+				font-size: 2vmin;
+				display: inline-block;
+			}
+
+			#removals {
+				width: 6vmin;
+				height: 1vmin;
+			}
+
+			#recursions {
+				margin-bottom: 0;
+			}
+
+			#github {
+				height: 90%;
+				margin-left: 1vmin;
+			}
+
 			#board {
-				width: 98vmin;
-				height: 98vmin;
-				position: absolute;
+				width: 95vmin;
+				height: 95vmin;
+				position: relative;
 				margin: auto;
 				top: 0;
 				right: 0;
@@ -26,7 +77,6 @@
 				font-family: Arial, Helvetica, sans-serif;
 				font-weight: bold;
 				text-align: center;
-				color: #0C0;
 
 				display: flex;
 				flex-flow: row wrap;
@@ -43,33 +93,44 @@
 
 				border-width: 0.4vmin;
 				border-style: solid;
-				border-color: #666;
-
-				background-color: #666;
 			}
 
 			.cell {
 				width: 33.333%;
 				height: 33.333%;
 
-				background-color: #333;
-
 				border-width: 0.2vmin;
 				border-style: solid;
-				border-color: #666;
 
 				font-size: 7vmin;
 			}
 
+			.number {
+				height: 75%;
+			}
+
 			.notes {
-				height: 15%;
+				height: 25%;
 				font-size: 2vmin;
 			}
 		</style>
 	</head>
 
 	<body>
-		<div id="board"></div>
+		<div id="game">
+			<div id="board"></div>
+			<div id="icons">
+				<a href="https://github.com/jakl/sudoku" target="_blank"><img id="github" src="https://simpleicons.org/icons/github.svg"></img></a>
+				<input id="textcolor" type="color" value="#00CC00" />
+				<input id="bordercolor" type="color" value="#666666" />
+				<input id="bgcolor" type="color" value="#333333" />
+				<button id="reset">Reset</button>
+				<button id="solve">Solve</button>
+				<button id="generate">Generate</button>
+				<input id="removals" type="number" value="25" />
+				<span id="recursions"></span>
+			</div>
+		</div>
 		<!-- Attach game to this element via JS html manipulation -->
 
 		<script>
@@ -79,6 +140,7 @@
 			 */
 
 			let totalRecursions = 0;
+			let removals = 25;
 			(function () {
 				console.log("Sudoku")
 				generateHtml()
@@ -110,7 +172,7 @@
 
 
 			/***************************************************************************
-			 * The below code deals with validating the sudoku board during human play
+			 * The below code attaches callbacks to the UI
 			 ***************************************************************************
 			 */
 
@@ -121,7 +183,98 @@
 						cell.addEventListener("input", cellInputCb)
 					}
 				}
+				attachRemovals()
+				attachColors()
+				attachButtons()
 			}
+
+			function attachRemovals() {
+				const removalsInput = document.getElementById('removals')
+				if (getCookie('removals')) removalsInput.value = getCookie('removals')
+				removalsInput.addEventListener('input', removalsCb)
+				removalsCb.call
+			}
+
+			function removalsCb() {
+				removals = this.value
+				setCookie('removals', this.value)
+			}
+
+			function attachButtons() {
+				document.getElementById('reset').addEventListener('click', resetBtnCb)
+				document.getElementById('solve').addEventListener('click', solveBtnCb)
+				document.getElementById('generate').addEventListener('click', generateBtnCb)
+			}
+
+			async function generateBtnCb() {
+				resetBoardUI()
+				let solvedBoard
+				while (!(solvedBoard = await solveBoard())) {
+					resetBoardUI()
+				}
+				for (let i = 0; i < removals; i++) {
+					document.getElementById(`${Math.floor(Math.random() * 9)}${Math.floor(Math.random() * 9)}`).innerText = ''
+				}
+			}
+
+			function solveBtnCb() {
+				resetBoardUI()
+				solveBoard()
+			}
+
+			function resetBtnCb() {
+				resetBoardUI()
+			}
+
+			function attachColors() {
+				const textColor = document.getElementById('textcolor')
+				const borderColor = document.getElementById('bordercolor')
+				const bgColor = document.getElementById('bgcolor')
+
+				// Set values by cookies if cookies exist
+				if (getCookie('textColor')) textColor.value = getCookie('textColor')
+				if (getCookie('borderColor')) borderColor.value = getCookie('borderColor')
+				if (getCookie('bgColor')) bgColor.value = getCookie('bgColor')
+
+				// Attach listeners for user input changes
+				textColor.addEventListener("input", textColorInputCb)
+				borderColor.addEventListener("input", borderColorInputCb)
+				bgColor.addEventListener("input", bgColorInputCb)
+
+				// Call change functions once to set initial colors
+				textColorInputCb.call(textColor)
+				borderColorInputCb.call(borderColor)
+				bgColorInputCb.call(bgColor)
+			}
+
+			function textColorInputCb() {
+				setCookie('textColor', this.value)
+				document.body.style.color = this.value
+				Array.from(document.getElementsByTagName('button')).map((el) => el.style.color = this.value)
+			}
+
+			function borderColorInputCb() {
+				setCookie('borderColor', this.value)
+				document.getElementById('icons').style.backgroundColor = this.value
+				Array.from(document.getElementsByClassName('quadrant')).map((el) => el.style.backgroundColor = this.value)
+				Array.from(document.getElementsByClassName('quadrant')).map((el) => el.style.borderColor = this.value)
+				Array.from(document.getElementsByClassName('cell')).map((el) => el.style.borderColor = this.value)
+			}
+
+			function bgColorInputCb() {
+				setCookie('bgColor', this.value)
+				document.body.style.backgroundColor = this.value
+				document.getElementById('icons').style.borderColor = this.value
+				Array.from(document.getElementsByClassName('cell')).map((el) => el.style.backgroundColor = this.value)
+				Array.from(document.getElementsByTagName('button')).map((el) => el.style.backgroundColor = this.value)
+			}
+
+
+
+			/***************************************************************************
+			 * The below code deals with validating the sudoku board during human play
+			 ***************************************************************************
+			 */
 
 			function cellInputCb() {
 				let capture
@@ -207,6 +360,8 @@
 			}
 
 			function resetBoardUI() {
+				totalRecursions = 0
+				resetValidation()
 				for (let i = 0; i < 9; i++) {
 					for (let j = 0; j < 9; j++) {
 						document.getElementById(`${i}${j}`).innerText = ''
@@ -247,13 +402,19 @@
 				]
 				board.counts = [null, 0, 0, 0, 0, 0, 0, 0, 0, 0] // The times each number appears on the board. The 0 index is ignored.
 				const solution = await recursivelySolveBoard(board)
-				outputBoardToUI(solution)
 				console.log("Total Recursions: ", totalRecursions)
+				if (solution) {
+					outputBoardToUI(solution)
+					return board
+				}
+				else {
+					document.getElementById('recursions').innerText = 'Failed to solve before timeout'
+					return false
+				}
 			}
 
 			async function recursivelySolveBoard(board) {
-				totalRecursions += 1
-				if (!solutionPossible(board)) return false
+				if (!solutionPossible(board)) return null
 
 				const number = pickNumber(board.counts)
 				if (!number) return board // solved
@@ -271,16 +432,51 @@
 
 				if (!goodCells.length) return false // no viable cells means dead end
 
+				if (totalRecursions++ > 120) return 0
+
 				shuffleArray(goodCells)
 
 				for (const goodCell of goodCells) {
 					const newBoard = deepCopyBoard(board)
 					await writeNumber(newBoard, number, goodCell[0], goodCell[1])
+					await fillSingles(newBoard)
 					const answer = await recursivelySolveBoard(newBoard)
 					if (answer) return answer // solved
+					if (answer === 0) return 0
+					if (answer === null) return false
 				}
 
 				return false // all viable cells led to a dead end
+			}
+
+			async function fillSingles(board) {
+				while (hasSingles(board)) {
+					for (let i = 0; i < 9; i++) {
+						for (let j = 0; j < 9; j++) {
+							let notedNumbers = []
+							for (let number = 1; number <= 9; number++) {
+								if (!board[i][j][number]) notedNumbers.push(number)
+							}
+							if (notedNumbers.length == 1) {
+								await writeNumber(board, notedNumbers[0], i, j)
+							}
+						}
+					}
+				}
+			}
+
+			function hasSingles(board) {
+				let foundSingles = false
+				for (let i = 0; i < 9; i++) {
+					for (let j = 0; j < 9; j++) {
+						let notationsCount = 0
+						for (let number = 1; number <= 9; number++) {
+							if (!board[i][j][number]) notationsCount += 1
+						}
+						if (notationsCount == 1) foundSingles = true
+					}
+				}
+				return foundSingles
 			}
 
 			// Based on filled numbers and valid numbers, ensure each row/col/quad can contain 1-9
@@ -340,6 +536,7 @@
 						document.getElementById(`notes${i}${j}`).innerText = notes
 					}
 				}
+				document.getElementById('recursions').innerText = 'Tics: ' + totalRecursions
 			}
 
 			function deepCopyBoard(oldBoard) {
@@ -460,6 +657,25 @@
 					[a[i], a[j]] = [a[j], a[i]]
 				}
 				return a
+			}
+
+			function setCookie(name, value) {
+				document.cookie = `${name}=${value};max-age=${31536000 * 10};path=/`; // 10 year max age
+			}
+
+			function getCookie(cname) {
+				var name = cname + "=";
+				var ca = document.cookie.split(';');
+				for (var i = 0; i < ca.length; i++) {
+					var c = ca[i];
+					while (c.charAt(0) == ' ') {
+						c = c.substring(1);
+					}
+					if (c.indexOf(name) == 0) {
+						return c.substring(name.length, c.length);
+					}
+				}
+				return "";
 			}
 		</script>
 	</body>
