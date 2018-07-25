@@ -36,10 +36,11 @@
 				min-width: 90vmin;
 
 				text-align: left;
+				font-size: 2vmin;
+				background-color: darkgray;
 			}
 
-			#icons button,
-			#recursions,
+			button,
 			#removals {
 				vertical-align: middle;
 				height: 75%;
@@ -53,10 +54,6 @@
 			#removals {
 				width: 6vmin;
 				height: 1vmin;
-			}
-
-			#recursions {
-				margin-bottom: 0;
 			}
 
 			#github {
@@ -81,6 +78,10 @@
 				display: flex;
 				flex-flow: row wrap;
 				justify-content: space-around;
+			}
+
+			.output {
+				display: inline-block;
 			}
 
 			.quadrant {
@@ -127,8 +128,9 @@
 				<button id="reset">Reset</button>
 				<button id="solve">Solve</button>
 				<button id="generate">Generate</button>
-				<input id="removals" type="number" value="25" />
-				<span id="recursions"></span>
+				<span class="output">difficulty 0-81</span>
+				<input id="removals" type="number" value="25" min="0" max="81" />
+				<span class="output" id="recursions"></span>
 			</div>
 		</div>
 		<!-- Attach game to this element via JS html manipulation -->
@@ -139,8 +141,7 @@
 			 ***************************************************************************
 			 */
 
-			let totalRecursions = 0;
-			let removals = 25;
+			let removals, totalRecursions = 0;
 			(function () {
 				console.log("Sudoku")
 				generateHtml()
@@ -192,10 +193,12 @@
 				const removalsInput = document.getElementById('removals')
 				if (getCookie('removals')) removalsInput.value = getCookie('removals')
 				removalsInput.addEventListener('input', removalsCb)
-				removalsCb.call
+				removalsCb.call(removalsInput)
 			}
 
 			function removalsCb() {
+				if (this.value > 81) this.value = 81
+				if (this.value < 0) this.value = 0
 				removals = this.value
 				setCookie('removals', this.value)
 			}
@@ -212,8 +215,9 @@
 				while (!(solvedBoard = await solveBoard())) {
 					resetBoardUI()
 				}
+				const shuffledCells = shuffleArray([...Array(81).keys()])
 				for (let i = 0; i < removals; i++) {
-					document.getElementById(`${Math.floor(Math.random() * 9)}${Math.floor(Math.random() * 9)}`).innerText = ''
+					document.getElementById(`${Math.floor(shuffledCells[i] / 9)}${shuffledCells[i] % 9}`).innerText = ''
 				}
 			}
 
@@ -249,13 +253,11 @@
 
 			function textColorInputCb() {
 				setCookie('textColor', this.value)
-				document.body.style.color = this.value
-				Array.from(document.getElementsByTagName('button')).map((el) => el.style.color = this.value)
+				document.getElementById('board').style.color = this.value
 			}
 
 			function borderColorInputCb() {
 				setCookie('borderColor', this.value)
-				document.getElementById('icons').style.backgroundColor = this.value
 				Array.from(document.getElementsByClassName('quadrant')).map((el) => el.style.backgroundColor = this.value)
 				Array.from(document.getElementsByClassName('quadrant')).map((el) => el.style.borderColor = this.value)
 				Array.from(document.getElementsByClassName('cell')).map((el) => el.style.borderColor = this.value)
@@ -264,9 +266,7 @@
 			function bgColorInputCb() {
 				setCookie('bgColor', this.value)
 				document.body.style.backgroundColor = this.value
-				document.getElementById('icons').style.borderColor = this.value
 				Array.from(document.getElementsByClassName('cell')).map((el) => el.style.backgroundColor = this.value)
-				Array.from(document.getElementsByTagName('button')).map((el) => el.style.backgroundColor = this.value)
 			}
 
 
@@ -408,7 +408,7 @@
 					return board
 				}
 				else {
-					document.getElementById('recursions').innerText = 'Failed to solve before timeout'
+					document.getElementById('recursions').innerText = `Timeout at ${totalRecursions} recursions`
 					return false
 				}
 			}
@@ -536,7 +536,7 @@
 						document.getElementById(`notes${i}${j}`).innerText = notes
 					}
 				}
-				document.getElementById('recursions').innerText = 'Tics: ' + totalRecursions
+				document.getElementById('recursions').innerText = totalRecursions + ' recursions to solve'
 			}
 
 			function deepCopyBoard(oldBoard) {
