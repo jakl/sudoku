@@ -27,6 +27,7 @@
 
 			#icons {
 				height: 5vmin;
+				margin-top: -0.2vmin;
 				display: inline-block;
 
 				border-width: 0.2vmin;
@@ -266,6 +267,7 @@
 			function bgColorInputCb() {
 				setCookie('bgColor', this.value)
 				document.body.style.backgroundColor = this.value
+				document.getElementById('icons').style.borderColor = this.value
 				Array.from(document.getElementsByClassName('cell')).map((el) => el.style.backgroundColor = this.value)
 			}
 
