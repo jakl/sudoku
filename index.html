@@ -142,7 +142,7 @@
 			 ***************************************************************************
 			 */
 
-			let removals, totalRecursions = 0;
+			let removals, currentBoard, totalRecursions = 0;
 			(function () {
 				console.log("Sudoku")
 				generateHtml()
@@ -223,8 +223,8 @@
 			}
 
 			function solveBtnCb() {
-				resetBoardUI()
-				solveBoard()
+				totalRecursions = 0
+				solveBoard(currentBoard)
 			}
 
 			function resetBtnCb() {
@@ -363,6 +363,7 @@
 			}
 
 			function resetBoardUI() {
+				currentBoard = false
 				totalRecursions = 0
 				resetValidation()
 				for (let i = 0; i < 9; i++) {
@@ -390,12 +391,12 @@
 			 * All of the below code deals with solving sudoku boards
 			 ***************************************************************************
 			 */
-			async function solveBoard() {
+			async function solveBoard(givenBoard) {
 				// Each cell in this board is a hash of numbers tracking whether they're invalid (true) or valid (false/undefined)
 				// as well as tracking the number actually written in the cell, if there is one
 				// Example of a cell containing the number 2 which is valid, while 1 would be invalid for this cell:
 				// Ex: { 1: true, 2: true, 3: false, number: 2 }
-				const board = [
+				const board = givenBoard || [
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
@@ -406,20 +407,23 @@
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
 				]
-				board.counts = [null, 0, 0, 0, 0, 0, 0, 0, 0, 0] // The times each number appears on the board. The 0 index is ignored.
+				board.counts = board.counts || [null, 0, 0, 0, 0, 0, 0, 0, 0, 0] // The times each number appears on the board. The 0 index is ignored.
 				const solution = await recursivelySolveBoard(board)
 				console.log("Total Recursions: ", totalRecursions)
 				if (solution) {
 					outputBoardToUI(solution)
 					return board
-				}
-				else {
+				}	else if (!totalRecursions) {
+					document.getElementById('recursions').innerText = `Board is unsolvable`
+					return false
+				} else {
 					document.getElementById('recursions').innerText = `Timeout at ${totalRecursions} recursions`
 					return false
 				}
 			}
 
 			async function recursivelySolveBoard(board) {
+				currentBoard = board
 				if (!solutionPossible(board)) return null
 
 				const number = pickNumber(board.counts)
