@@ -146,7 +146,8 @@
 				console.log("Sudoku")
 				generateHtml()
 				attachInputListeners()
-				solveBoard()
+				// Load existing game or generate a new game
+				if (!outputBoardFromCookie()) generateBtnCb()
 			})()
 
 			/***************************************************************************
@@ -157,7 +158,7 @@
 				let html = ''
 				for (let quadrant = 0; quadrant < 9; quadrant++) {
 					html += `<div class="quadrant ${quadrant}">`
-					let [xSet, ySet] = getCoordinatesOfQuadrant(quadrant)
+					const [xSet, ySet] = getCoordinatesOfQuadrant(quadrant)
 					for (const x of xSet) {
 						for (const y of ySet) {
 							html += `<div class="cell">
@@ -169,6 +170,30 @@
 					html += `</div>`
 				}
 				document.getElementById('board').innerHTML = html
+			}
+
+			function outputBoardFromCookie() {
+				let simplifiedBoard = getCookie('board')
+				if (!simplifiedBoard) return false
+
+				simplifiedBoard = JSON.parse(simplifiedBoard)
+				currentBoard = deepCopyBoard()
+
+				for (let i = 0; i < 9; i++) {
+					for (let j = 0; j < 9; j++) {
+						currentBoard[i][j].number = simplifiedBoard[i][j]
+
+						// Clear all notes cause we can't fit them in the limited cookie length
+					  for (let number = 1; number <= 9; number++) {
+					  	currentBoard[i][j][number] = true
+					  }
+					}
+				}
+
+				outputBoardToUI(currentBoard)
+				validateBoard()
+
+				return true
 			}
 
 
@@ -275,6 +300,8 @@
 
       // Move cursor to start of cell when clicking anywhere in a cell
 			function cellFocusCb() {
+				writeBoardToCookie() // stick this here cause we want to save state early and often
+
 				let ele = this
 				setTimeout(() => { // Need settimeout to overwrite cursor placement only after it's initially set
 					let range = document.createRange()
@@ -299,6 +326,20 @@
 
 				if (this.innerText) fixNotes(this.id[0], this.id[1], this.innerText)
 				validateBoard()
+			}
+
+			function writeBoardToCookie() {
+				setCookie('board', JSON.stringify(getSimplifiedBoardFromUI()))
+			}
+
+			function getSimplifiedBoardFromUI() {
+				const board = [[],[],[],[],[],[],[],[],[]]
+				for (let i = 0; i < 9; i++) {
+					for (let j = 0; j < 9; j++) {
+						board[i].push(document.getElementById(`${i}${j}`).innerText)
+					}
+				}
+				return board
 			}
 
 			function fixNotes(x, y, number) {
@@ -430,22 +471,8 @@
 			 ***************************************************************************
 			 */
 			async function solveBoard(givenBoard) {
-				// Each cell in this board is a hash of numbers tracking whether they're invalid (true) or valid (false/undefined)
-				// as well as tracking the number actually written in the cell, if there is one
-				// Example of a cell containing the number 2 which is valid, while 1 would be invalid for this cell:
-				// Ex: { 1: true, 2: true, 3: false, number: 2 }
-				const board = givenBoard || [
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
-				]
-				board.counts = board.counts || [null, 0, 0, 0, 0, 0, 0, 0, 0, 0] // The times each number appears on the board. The 0 index is ignored.
+				const board =  givenBoard || deepCopyBoard()
+				board.counts = board.counts || [null, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 				const solution = await recursivelySolveBoard(board)
 				if (solution) {
 					outputBoardToUI(solution)
@@ -588,7 +615,12 @@
 				document.getElementById('output').innerText = totalRecursions + ' recursions to solve'
 			}
 
+      // If not board is given, generate a blank board
 			function deepCopyBoard(oldBoard) {
+				// Each cell in this board is a hash of numbers tracking whether they're invalid (true) or valid (false/undefined)
+				// as well as tracking the number actually written in the cell, if there is one
+				// Example of a cell containing the number 2 which is valid, while 1 would be invalid for this cell:
+				// Ex: { 1: true, 2: true, 3: false, number: 2 }
 				const newBoard = [
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
@@ -600,19 +632,22 @@
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
 					[{}, {}, {}, {}, {}, {}, {}, {}, {}],
 				]
+				// The times each number appears on the board. The 0 index is ignored.
 				newBoard.counts = [null, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-				for (let i = 0; i < 9; i++) {
-					for (let j = 0; j < 9; j++) {
-						for (let number = 1; number <= 9; number++) {
-							if (oldBoard[i][j][number]) newBoard[i][j][number] = true
+				if (oldBoard) {
+					for (let i = 0; i < 9; i++) {
+						for (let j = 0; j < 9; j++) {
+							for (let number = 1; number <= 9; number++) {
+								if (oldBoard[i][j][number]) newBoard[i][j][number] = true
+							}
+							if (oldBoard[i][j].number) newBoard[i][j].number = oldBoard[i][j].number
 						}
-						if (oldBoard[i][j].number) newBoard[i][j].number = oldBoard[i][j].number
 					}
-				}
 
-				for (let number = 1; number <= 9; number++) {
-					newBoard.counts[number] = oldBoard.counts[number]
+					for (let number = 1; number <= 9; number++) {
+						newBoard.counts[number] = oldBoard.counts[number]
+					}
 				}
 
 				return newBoard
