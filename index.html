@@ -255,6 +255,7 @@
 			function textColorInputCb() {
 				setCookie('textColor', this.value)
 				document.getElementById('board').style.color = this.value
+				validateBoard()
 			}
 
 			function borderColorInputCb() {
@@ -377,7 +378,10 @@
 					cell.style.color = ''
 				}
 				else {
-					cell.style.color = '#A00'
+					// Shift the color for invalid cells based on general text color
+					// This is a 3/4th inversion to keep light text on dark bg or dark text on light bg colors visible
+					const color = parseInt(document.getElementById('textcolor').value.substr(1, 6), 16)
+					cell.style.color = '#' + ('000000' + Math.abs(12582912 - color).toString(16)).slice(-6)
 				}
 			}
 
