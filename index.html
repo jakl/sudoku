@@ -184,9 +184,9 @@
 						currentBoard[i][j].number = simplifiedBoard[i][j]
 
 						// Clear all notes cause we can't fit them in the limited cookie length
-					  for (let number = 1; number <= 9; number++) {
-					  	currentBoard[i][j][number] = true
-					  }
+						for (let number = 1; number <= 9; number++) {
+							currentBoard[i][j][number] = true
+						}
 					}
 				}
 
@@ -298,7 +298,7 @@
 				Array.from(document.getElementsByClassName('cell')).map((el) => el.style.backgroundColor = this.value)
 			}
 
-      // Move cursor to start of cell when clicking anywhere in a cell
+			// Move cursor to start of cell when clicking anywhere in a cell
 			function cellFocusCb() {
 				writeBoardToCookie() // stick this here cause we want to save state early and often
 
@@ -314,14 +314,14 @@
 			}
 
 			function cellInputCb() {
+				writeBoardToCookie() // stick this here cause we want to save state early and often
+
 				let capture
-				if (!this.innerText.match(/^[0-9]$/)) {
-					if (capture = this.innerText.match(/([0-9])/)) {
-						this.innerText = capture[1]
-					}
-					else {
-						this.innerText = ''
-					}
+				if (capture = this.innerText.match(/^([1-9])/)) {
+					this.innerText = capture[1]
+				}
+				else {
+					this.innerText = ''
 				}
 
 				if (this.innerText) fixNotes(this.id[0], this.id[1], this.innerText)
@@ -333,7 +333,17 @@
 			}
 
 			function getSimplifiedBoardFromUI() {
-				const board = [[],[],[],[],[],[],[],[],[]]
+				const board = [
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[],
+					[]
+				]
 				for (let i = 0; i < 9; i++) {
 					for (let j = 0; j < 9; j++) {
 						board[i].push(document.getElementById(`${i}${j}`).innerText)
@@ -471,7 +481,7 @@
 			 ***************************************************************************
 			 */
 			async function solveBoard(givenBoard) {
-				const board =  givenBoard || deepCopyBoard()
+				const board = givenBoard || deepCopyBoard()
 				board.counts = board.counts || [null, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 				const solution = await recursivelySolveBoard(board)
 				if (solution) {
@@ -615,7 +625,7 @@
 				document.getElementById('output').innerText = totalRecursions + ' recursions to solve'
 			}
 
-      // If not board is given, generate a blank board
+			// If not board is given, generate a blank board
 			function deepCopyBoard(oldBoard) {
 				// Each cell in this board is a hash of numbers tracking whether they're invalid (true) or valid (false/undefined)
 				// as well as tracking the number actually written in the cell, if there is one
